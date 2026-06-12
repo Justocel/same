@@ -1,0 +1,7 @@
+{
+  // Point VS Code / Pylance at the uv-managed project venv so imports
+  // (psycopg, etc.) resolve in the editor. uv always creates .venv here.
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": ["tests"]
+}

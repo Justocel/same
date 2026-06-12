@@ -1,0 +1,12 @@
+__pycache__/
+*.py[oc]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.env
+.env.local
+data/cache/
+data/*.bak
+data/*.bak.*
+*.session.sql
+.DS_Store
