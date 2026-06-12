@@ -13,19 +13,23 @@ Proyecto **sandbox** — pensado para explorar y analizar, no para producción.
 >
 > **Postgres client required** for `make migrate` (and `createdb`): install
 > the `psql`/`createdb` CLI tools (e.g. `apt install postgresql-client`).
+>
+> **PostGIS required** (la migración `003` hace `CREATE EXTENSION postgis`):
+> `apt install postgresql-NN-postgis-3` y un rol con permiso de crear extensiones.
 
-1. `cp .env.example .env` and fill in `DATABASE_URL`
+1. `cp .env.example .env` and fill in `DATABASE_URL` (con auth peer: `postgresql:///same`)
 2. `make install`
 3. `createdb same` (o el nombre que pongas en `DATABASE_URL`)
 4. `make migrate`
-5. `make run` — extrae el PDF de `data/raw/` y carga la tabla `intervenciones`
+5. `make run` — extrae el PDF, carga `intervenciones` y corre el transform relacional
 
-El PDF de origen vive en
+`make transform` re-corre solo el transform (dims + `dependencias` + FKs) sin
+re-extraer el PDF. El PDF de origen vive en
 [`data/raw/`](data/raw/intervenciones_same_unidades_penitenciarias.pdf).
 
 ## Tasks
 
-`make lint` · `make format` · `make test` · `make migrate` · `make run`
+`make lint` · `make format` · `make test` · `make migrate` · `make run` · `make transform`
 
 > Pre-commit's ruff **is** the dev-group ruff (a `local` hook running
 > `uv run ruff`), so it never drifts from `make lint`/`make format`. Anything

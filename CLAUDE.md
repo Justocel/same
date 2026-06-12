@@ -5,19 +5,37 @@ penitenciarias y dependencias policiales. La fuente es un PDF de 317 páginas
 (`data/raw/`) con una tabla de 10 columnas por página. El pipeline extrae esas
 tablas con `pdfplumber`, las normaliza con `pandas` y las carga en Postgres.
 
-**Run order:** `make install` → `createdb same` → `make migrate` → `make run`
+**Run order:** `make install` → `createdb same` → `make migrate` → `make run`.
+`make run` = extraer PDF → cargar `intervenciones` cruda → transform relacional.
+`make transform` re-corre solo el transform (idempotente, sin re-extraer el PDF).
+Requiere **PostGIS** en el server (`CREATE EXTENSION postgis` en la migración 003).
 
 **Pipeline (`src/same`):**
 - `extract.py` — `extract_intervenciones(pdf_path) -> pd.DataFrame`. Recorre las
-  páginas, descarta la fila de título y la de encabezado que se repiten en cada
-  página, normaliza nombres de columnas y parsea `fecha_hora` y `traslado`.
+  páginas, descarta título/encabezado repetidos, parsea `fecha_hora` y `traslado`.
+- `transform.py` — `transform(conn)`: SQL set-based idempotente. Puebla las dims,
+  construye `dependencias` desde los `(direccion, altura)` distintos (extrae
+  `codigo_comisaria` de `motivo` con regex; `tipo` es heurístico **provisional**),
+  y linkea las FKs de `intervenciones`.
 - `db.py` — `connect()`: context manager sobre `psycopg` (commit/rollback).
-- `__main__.py` — orquesta: extrae el PDF de `data/raw/` y carga la tabla
-  `intervenciones` (truncate + insert, idempotente).
+- `__main__.py` — orquesta extract → load (`TRUNCATE … CASCADE` + insert) →
+  transform; además exporta `data/processed/intervenciones.csv`. Carga `.env` con
+  `python-dotenv`. Si no hay `DATABASE_URL`, solo resume + CSV (sin DB).
 
-**Datos / esquema:** una sola tabla `intervenciones` (ver `migrations/001_init.sql`).
-Columnas crudas del PDF + `fecha_hora` parseada, `traslado` booleano y
-`pagina`/`fila` de origen.
+**Esquema (relacional, ver `migrations/`):**
+- `intervenciones` (001) — tabla cruda de aterrizaje + FKs (004): `dependencia_id`,
+  `diagnostico_codigo`, `prioridad_codigo`, `hospital_id`.
+- dims (002): `dim_diagnostico`, `dim_prioridad`, `dim_hospital` (split de los
+  campos ya codificados; se pueblan en el transform).
+- `dependencias` (003, PostGIS) — un lugar por `(direccion, altura)`; `geom`
+  `Point,4326`; etiqueta `dependencia_policial_N` cuando `nombre` es NULL.
+- `intervencion_analisis` (004) — 1:1, enriquecimiento LLM en `atributos` JSONB
+  (modelo híbrido: variables estables se promueven a columnas en la vista).
+- `v_intervenciones` (004) — vista plana que une todo.
+
+**Pendiente (próximos pasos):** geocoding USIG (GCBA) para llenar `lat/lon/geom`
+de `dependencias`; enriquecimiento LLM (Haiku) → `intervencion_analisis.atributos`
+(variables como `violencia_genero`, `autolesion`, `sexo`, …).
 
 **Conventions:**
 - Secrets live in `.env` (never commit). `.env.example` documents the keys.

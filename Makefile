@@ -1,4 +1,4 @@
-.PHONY: install lint format test run migrate
+.PHONY: install lint format test run migrate transform
 
 install:
 	uv sync
@@ -19,3 +19,6 @@ migrate:
 
 run:
 	uv run python -m same
+
+transform:
+	uv run python -m same.transform

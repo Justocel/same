@@ -61,6 +61,14 @@ def _load(log, df: pd.DataFrame) -> None:
     log.info("cargadas %d filas en la tabla intervenciones", len(df))
 
 
+def _run_transform(log) -> None:
+    from same.db import connect
+    from same.transform import transform
+
+    with connect() as conn:
+        transform(conn, log)
+
+
 def main() -> None:
     load_dotenv()  # lee DATABASE_URL / LOG_LEVEL desde .env
     log = setup_logging()
@@ -77,8 +85,9 @@ def main() -> None:
 
     if os.getenv("DATABASE_URL"):
         _load(log, df)
+        _run_transform(log)
     else:
-        log.warning("DATABASE_URL no definida — omito la carga (solo resumen)")
+        log.warning("DATABASE_URL no definida — omito carga y transform (solo resumen)")
 
 
 if __name__ == "__main__":
