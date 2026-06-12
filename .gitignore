@@ -8,7 +8,10 @@ __pycache__/
 data/cache/
 data/*.bak
 data/*.bak.*
-# Artefactos derivados (regenerables con `make run`); el PDF crudo sí se versiona.
+# Datos crudos: pueden contener PII en las descripciones. No versionar.
+data/raw/*
+!data/raw/.gitkeep
+# Artefactos derivados (regenerables con `make run`).
 data/processed/*
 !data/processed/.gitkeep
 *.session.sql

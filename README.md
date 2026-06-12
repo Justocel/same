@@ -24,8 +24,9 @@ Proyecto **sandbox** — pensado para explorar y analizar, no para producción.
 5. `make run` — extrae el PDF, carga `intervenciones` y corre el transform relacional
 
 `make transform` re-corre solo el transform (dims + `dependencias` + FKs) sin
-re-extraer el PDF. El PDF de origen vive en
-[`data/raw/`](data/raw/intervenciones_same_unidades_penitenciarias.pdf).
+re-extraer el PDF. El PDF de origen **no se versiona** (puede contener PII en las
+descripciones): se coloca localmente en [`data/raw/`](data/raw/) y `make run` toma
+el primer `*.pdf` que encuentre ahí.
 
 ## Tasks
 
