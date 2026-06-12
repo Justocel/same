@@ -16,13 +16,17 @@ transform relacional. `make transform` re-corre solo el transform (idempotente).
   páginas, descarta título/encabezado repetidos, parsea `fecha_hora` y `traslado`,
   y anonimiza `motivo` (llama a `anonymize`) antes de devolver el DataFrame.
 - `anonymize.py` — `anonymize(text)`: scrub determinístico de PII estructurada en
-  texto libre (quita `[Id.Remoto: …]` y toda corrida de ≥7 dígitos → `[NUM]`:
-  teléfonos —incluso partidos por espacio—, POC, DNI). Conserva números cortos
-  (códigos de dependencia, direcciones, vitales). Nombres → `redact_names.py`.
-- `redact_names.py` — redacción de NOMBRES y legajos (LP) con Claude Haiku 4.5 vía
-  **Batches API** (50% más barata) sobre los motivos distintos, con caché por hash
-  en `data/cache/` (sin PII). Sobrescribe `motivo` en la DB y re-exporta el CSV.
-  `make redact-names`; o `uv run python -m same.redact_names --sample N` para probar.
+  texto libre (quita `[Id.Remoto: …]`, legajos `LP`/`LEGAJO <n>` → `[LP]`, y toda
+  corrida de ≥7 dígitos → `[NUM]`: teléfonos —incluso partidos por espacio—, POC,
+  DNI). Conserva números cortos (códigos de dependencia, direcciones, vitales).
+  Nombres de persona → `redact_names.py`.
+- `redact_names.py` — redacción de NOMBRES con Claude Haiku 4.5 vía **Batches API**
+  (50% más barata) sobre los motivos distintos, con caché por hash en `data/cache/`
+  (sin PII). Pasa la salida del LLM por `anonymize()` como red de seguridad (los
+  legajos los garantiza esa capa, no el LLM). Sobrescribe `motivo` en la DB y
+  re-exporta el CSV. `--sample N` prueba sincrónica sin tocar la DB.
+  **Ojo:** corré `make redact-names` SOLO después de `make run` (sobre el `motivo`
+  determinístico); un guard evita re-batchear textos que ya tienen `[NOMBRE]`.
 - `transform.py` — `transform(conn)`: SQL set-based idempotente. Puebla las dims,
   construye `dependencias` desde los `(direccion, altura)` distintos (extrae
   `codigo_comisaria` de `motivo` con regex; `tipo` es heurístico **provisional**),

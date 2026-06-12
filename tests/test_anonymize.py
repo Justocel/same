@@ -11,6 +11,15 @@ def test_redacts_phones_poc_and_dni():
     assert anonymize("POC COMISARIA: 15-4071- 7749") == "POC COMISARIA: [NUM]"
 
 
+def test_redacts_police_badge_numbers():
+    assert anonymize("OFICIAL OJEDA LP 15798") == "OFICIAL OJEDA [LP]"
+    assert anonymize("OF MAYOR L.P. 4925 ALCALDIA 10") == "OF MAYOR [LP] ALCALDIA 10"
+    assert anonymize("AGENTE LEGAJO 1234") == "AGENTE [LP]"
+    # no se confunde con códigos de dependencia ni con [LP] ya redactado
+    assert anonymize("COMISARIA 4D - CALIFORNIA 1850") == "COMISARIA 4D - CALIFORNIA 1850"
+    assert anonymize("OF [NOMBRE] [LP] SOLICITA") == "OF [NOMBRE] [LP] SOLICITA"
+
+
 def test_removes_id_remoto_block():
     out = anonymize("AUTOLESIONADO [Id.Remoto: 48132107]")
     assert "Id.Remoto" not in out

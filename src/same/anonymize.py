@@ -22,6 +22,9 @@ _MIN_DIGITS = 7  # corridas con >= 7 dígitos se asumen identificadores (tel/POC
 # Bloque [Id.Remoto: 48132107]. Corchetes y el nº son opcionales para tolerar
 # bloques truncados al borde de celda; acotado a dígitos para no comer texto.
 _ID_REMOTO = re.compile(r"\[?\s*id\.?\s*remoto\s*:?\s*[\d.\-]*\]?", re.IGNORECASE)
+# Legajo policial: "LP 15798", "L.P. 4925", "LEGAJO 1234" -> [LP]. Estructurado y
+# sin ambigüedad (en estos datos "LP" siempre es legajo), así que va acá y no al LLM.
+_LEGAJO = re.compile(r"\b(?:L\.?\s?P\.?|LEGAJO)\s*\d+", re.IGNORECASE)
 # Corrida de dígitos con separadores internos de teléfono (punto, guion, espacio).
 # Incluye espacios porque algunos teléfonos vienen partidos: "11-2271- 2171".
 _NUM_RUN = re.compile(r"\d[\d.\- ]*\d")
@@ -38,5 +41,6 @@ def anonymize(text: str | None) -> str | None:
     if not text:
         return text
     text = _ID_REMOTO.sub("", text)
+    text = _LEGAJO.sub("[LP]", text)
     text = _NUM_RUN.sub(_redact_num, text)
     return _MULTISPACE.sub(" ", text).strip()

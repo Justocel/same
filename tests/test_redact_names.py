@@ -9,6 +9,11 @@ def test_missing_texts_uses_hash_cache():
     assert missing_texts(distinct, {}) == distinct
 
 
+def test_missing_texts_skips_already_redacted():
+    # texto que ya tiene [NOMBRE] no se re-batchea (guard anti re-corrida)
+    assert missing_texts(["OFICIAL [NOMBRE] SOLICITA", "DOLOR"], {}) == ["DOLOR"]
+
+
 def test_clean_output_strips_wrapping_quotes_and_space():
     assert _clean_output('  "TEXTO ANON"  ') == "TEXTO ANON"
     assert _clean_output("TEXTO SIN COMILLAS") == "TEXTO SIN COMILLAS"

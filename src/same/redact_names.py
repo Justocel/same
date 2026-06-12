@@ -67,8 +67,14 @@ def save_cache(cache: dict[str, str]) -> None:
 
 
 def missing_texts(distinct: list[str], cache: dict[str, str]) -> list[str]:
-    """Textos distintos cuyo hash todavía no está en la caché."""
-    return [t for t in distinct if _hash(t) not in cache]
+    """Textos distintos que todavía necesitan pasar por el LLM.
+
+    Excluye lo ya cacheado (por hash) y lo que ya contiene `[NOMBRE]` (marca que
+    solo pone el LLM): así re-correr `redact-names` sobre un `motivo` ya redactado
+    —sin `make run` antes— no vuelve a lanzar el batch. El flujo es `make run`
+    (repone el `motivo` determinístico) y luego `make redact-names`.
+    """
+    return [t for t in distinct if _hash(t) not in cache and "[NOMBRE]" not in t]
 
 
 def _clean_output(text: str) -> str:
@@ -193,8 +199,15 @@ def main() -> None:
                 cache[_hash(original)] = red
             save_cache(cache)
 
-        # Aplica la caché: sobrescribe motivo donde la redacción cambió algo.
-        updates = [(cache[_hash(t)], t) for t in distinct if cache.get(_hash(t), t) != t]
+        # Aplica la caché y pasa la salida del LLM por anonymize() como red de
+        # seguridad (captura legajos/teléfonos que el LLM haya dejado pasar).
+        from same.anonymize import anonymize
+
+        updates = []
+        for t in distinct:
+            final = anonymize(cache.get(_hash(t), t))
+            if final != t:
+                updates.append((final, t))
         with conn.cursor() as cur:
             cur.executemany("UPDATE intervenciones SET motivo = %s WHERE motivo = %s", updates)
         log.info(
