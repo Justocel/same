@@ -12,6 +12,8 @@ from pathlib import Path
 import pandas as pd
 import pdfplumber
 
+from same.anonymize import anonymize
+
 # Orden de columnas tal como aparecen en la tabla del PDF.
 COLUMNS = [
     "fecha_hora",
@@ -76,6 +78,10 @@ def extract_intervenciones(pdf_path: str | Path) -> pd.DataFrame:
 
     # traslado: "Si"/"No" -> bool (pd.NA si está vacío o no se reconoce).
     df["traslado"] = df["traslado"].map(_parse_si_no).astype("boolean")
+
+    # Anonimiza la descripción ANTES de persistir: quita PII estructurada
+    # (teléfonos, POC, DNI, Id.Remoto). Los nombres se redactan en el paso LLM.
+    df["motivo"] = df["motivo"].map(anonymize)
 
     return df
 
