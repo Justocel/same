@@ -33,15 +33,27 @@ Requiere **PostGIS** en el server (`CREATE EXTENSION postgis` en la migración 0
   (modelo híbrido: variables estables se promueven a columnas en la vista).
 - `v_intervenciones` (004) — vista plana que une todo.
 
-**Pendiente (próximos pasos):** geocoding USIG (GCBA) para llenar `lat/lon/geom`
-de `dependencias`; enriquecimiento LLM (Haiku) → `intervencion_analisis.atributos`
-(variables como `violencia_genero`, `autolesion`, `sexo`, …).
+**Privacidad / PII:** la columna `motivo` (descripción) contiene datos personales
+ocasionales — nombres y apellidos, teléfonos, números POC, `Id.Remoto`. El **PDF
+crudo no se versiona** (vive solo en `data/raw/`, gitignored); `data/processed/`
+(CSV) también está gitignored. Poder trazar una persona a una atención en una
+comisaría es el riesgo a evitar: **anonimizar `motivo` antes de exponer cualquier
+dato derivado**. (El PDF estuvo brevemente en commits públicos ya purgados de la
+rama; los objetos viejos pueden seguir cacheados en GitHub hasta su GC.)
+
+**Pendiente (próximos pasos):**
+- **Anonimización de `motivo`**: scrub determinístico (teléfonos, POC, `Id.Remoto`,
+  DNI) por regex + redacción de nombres con NER/LLM, antes de cargar/derivar.
+- Geocoding USIG (GCBA) para llenar `lat/lon/geom` de `dependencias`.
+- Enriquecimiento LLM (Haiku) → `intervencion_analisis.atributos` (variables como
+  `violencia_genero`, `autolesion`, `sexo`, …).
 
 **Conventions:**
 - Secrets live in `.env` (never commit). `.env.example` documents the keys.
 - Migrations are idempotent SQL (`IF NOT EXISTS`) so re-running is safe.
 - Use stdlib `logging` via `same.logging_config.setup_logging()`.
-- Datos crudos en `data/raw/` (versionados), derivados en `data/processed/`.
+- `data/raw/` (PDF crudo) y `data/processed/` (CSV derivado) están **gitignored**;
+  ningún dato (crudo o derivado) se versiona — ver Privacidad/PII.
 - Pre-commit runs the **dev-group ruff** via a `local` hook (not a pinned
   mirror), so the hook and `make lint`/`make format` can't drift. The
   trade-off: any environment that runs the hooks — **CI included** — must have
