@@ -1,4 +1,4 @@
-.PHONY: install lint format test run migrate transform
+.PHONY: install lint format test run migrate transform redact-names
 
 install:
 	uv sync
@@ -22,3 +22,6 @@ run:
 
 transform:
 	uv run python -m same.transform
+
+redact-names:
+	uv run python -m same.redact_names

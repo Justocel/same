@@ -8,6 +8,7 @@ dependencies = [
     "python-dotenv>=1.0",
     "pdfplumber>=0.11",
     "pandas>=2.2",
+    "anthropic>=0.109.1",
 ]
 
 [dependency-groups]

@@ -22,15 +22,20 @@ Proyecto **sandbox** — pensado para explorar y analizar, no para producción.
 3. `createdb same` (o el nombre que pongas en `DATABASE_URL`)
 4. `make migrate`
 5. `make run` — extrae el PDF, carga `intervenciones` y corre el transform relacional
+6. `make redact-names` — redacta nombres de la descripción con un LLM (paso final de
+   anonimización; necesita `ANTHROPIC_API_KEY` en `.env`)
 
-`make transform` re-corre solo el transform (dims + `dependencias` + FKs) sin
-re-extraer el PDF. El PDF de origen **no se versiona** (puede contener PII en las
-descripciones): se coloca localmente en [`data/raw/`](data/raw/) y `make run` toma
-el primer `*.pdf` que encuentre ahí.
+`make transform` re-corre solo el transform sin re-extraer el PDF. El PDF de origen
+**no se versiona** (puede contener PII en las descripciones): se coloca localmente
+en [`data/raw/`](data/raw/) y `make run` toma el primer `*.pdf` que encuentre ahí.
+
+> **Anonimización en dos capas:** `make run` ya quita la PII estructurada (teléfonos,
+> POC, DNI, Id.Remoto) de forma determinística; `make redact-names` agrega la
+> redacción de **nombres** con Claude Haiku 4.5 (Batches API, con caché local).
 
 ## Tasks
 
-`make lint` · `make format` · `make test` · `make migrate` · `make run` · `make transform`
+`make lint` · `make format` · `make test` · `make migrate` · `make run` · `make transform` · `make redact-names`
 
 > Pre-commit's ruff **is** the dev-group ruff (a `local` hook running
 > `uv run ruff`), so it never drifts from `make lint`/`make format`. Anything

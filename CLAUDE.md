@@ -5,10 +5,11 @@ penitenciarias y dependencias policiales. La fuente es un PDF de 317 páginas
 (`data/raw/`) con una tabla de 10 columnas por página. El pipeline extrae esas
 tablas con `pdfplumber`, las normaliza con `pandas` y las carga en Postgres.
 
-**Run order:** `make install` → `createdb same` → `make migrate` → `make run`.
-`make run` = extraer PDF → cargar `intervenciones` cruda → transform relacional.
-`make transform` re-corre solo el transform (idempotente, sin re-extraer el PDF).
-Requiere **PostGIS** en el server (`CREATE EXTENSION postgis` en la migración 003).
+**Run order:** `make install` → `createdb same` → `make migrate` → `make run`
+→ `make redact-names`. `make run` = extraer PDF → cargar `intervenciones` cruda →
+transform relacional. `make transform` re-corre solo el transform (idempotente).
+`make redact-names` redacta nombres con LLM (paso final de anonimización; needs
+`ANTHROPIC_API_KEY`). Requiere **PostGIS** (`CREATE EXTENSION postgis`, migración 003).
 
 **Pipeline (`src/same`):**
 - `extract.py` — `extract_intervenciones(pdf_path) -> pd.DataFrame`. Recorre las
@@ -17,7 +18,11 @@ Requiere **PostGIS** en el server (`CREATE EXTENSION postgis` en la migración 0
 - `anonymize.py` — `anonymize(text)`: scrub determinístico de PII estructurada en
   texto libre (quita `[Id.Remoto: …]` y toda corrida de ≥7 dígitos → `[NUM]`:
   teléfonos —incluso partidos por espacio—, POC, DNI). Conserva números cortos
-  (códigos de dependencia, direcciones, vitales). Nombres → paso LLM.
+  (códigos de dependencia, direcciones, vitales). Nombres → `redact_names.py`.
+- `redact_names.py` — redacción de NOMBRES y legajos (LP) con Claude Haiku 4.5 vía
+  **Batches API** (50% más barata) sobre los motivos distintos, con caché por hash
+  en `data/cache/` (sin PII). Sobrescribe `motivo` en la DB y re-exporta el CSV.
+  `make redact-names`; o `uv run python -m same.redact_names --sample N` para probar.
 - `transform.py` — `transform(conn)`: SQL set-based idempotente. Puebla las dims,
   construye `dependencias` desde los `(direccion, altura)` distintos (extrae
   `codigo_comisaria` de `motivo` con regex; `tipo` es heurístico **provisional**),
@@ -42,16 +47,19 @@ Requiere **PostGIS** en el server (`CREATE EXTENSION postgis` en la migración 0
 ocasionales — nombres y apellidos, teléfonos, números POC, `Id.Remoto`. El **PDF
 crudo no se versiona** (vive solo en `data/raw/`, gitignored); `data/processed/`
 (CSV) también está gitignored. Poder trazar una persona a una atención en una
-comisaría es el riesgo a evitar. El scrub **determinístico** de PII estructurada ya
-está implementado (`anonymize.py`, aplicado en `extract.py` antes de persistir):
-el DB y el CSV **no contienen** teléfonos/POC/DNI/Id.Remoto. Falta la redacción de
-**nombres** (raros, en mayúsculas) → se hace en el paso LLM. (El PDF estuvo
-brevemente en commits públicos ya purgados de la rama; los objetos viejos pueden
-seguir cacheados en GitHub hasta su GC.)
+comisaría es el riesgo a evitar. Dos capas, ambas implementadas:
+1. **Determinística** (`anonymize.py`, en `extract.py`): el DB y el CSV no contienen
+   teléfonos/POC/DNI/Id.Remoto.
+2. **Nombres por LLM** (`redact_names.py`, `make redact-names`): redacta nombres de
+   oficiales/detenidos y legajos. Es un paso aparte (cuesta y necesita API key); el
+   flujo completo es `make run && make redact-names`. Si re-corrés `make run`, la
+   capa de nombres hay que re-aplicarla — pero la caché por hash la hace instantánea
+   (sin re-llamar a la API).
+
+(El PDF estuvo brevemente en commits públicos ya purgados de la rama; los objetos
+viejos pueden seguir cacheados en GitHub hasta su GC.)
 
 **Pendiente (próximos pasos):**
-- **Redacción de nombres en `motivo`**: el scrub determinístico ya corre; los
-  nombres/apellidos (infrecuentes, en mayúsculas) se redactan en el paso LLM.
 - Geocoding USIG (GCBA) para llenar `lat/lon/geom` de `dependencias`.
 - Enriquecimiento LLM (Haiku) → `intervencion_analisis.atributos` (variables como
   `violencia_genero`, `autolesion`, `sexo`, …).
