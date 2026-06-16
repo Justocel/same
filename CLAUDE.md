@@ -28,21 +28,25 @@ transform relacional. `make transform` re-corre solo el transform (idempotente).
   **Ojo:** corré `make redact-names` SOLO después de `make run` (sobre el `motivo`
   determinístico); un guard evita re-batchear textos que ya tienen `[NOMBRE]`.
 - `transform.py` — `transform(conn)`: SQL set-based idempotente. Puebla las dims,
-  construye `dependencias` desde los `(direccion, altura)` distintos (extrae
-  `codigo_comisaria` de `motivo` con regex; `tipo` es heurístico **provisional**),
-  y linkea las FKs de `intervenciones`.
+  construye `ubicaciones` desde los `(direccion, altura)` distintos (el punto de
+  intervención, a geocodificar), linkea las FKs, y setea por fila la identidad de
+  la institución en `intervenciones`: `codigo_comisaria` (regex sobre `motivo`) y
+  `tipo_dependencia` (heurístico **provisional**).
 - `db.py` — `connect()`: context manager sobre `psycopg` (commit/rollback).
 - `__main__.py` — orquesta extract → load (`TRUNCATE … CASCADE` + insert) →
   transform; además exporta `data/processed/intervenciones.csv`. Carga `.env` con
   `python-dotenv`. Si no hay `DATABASE_URL`, solo resume + CSV (sin DB).
 
 **Esquema (relacional, ver `migrations/`):**
-- `intervenciones` (001) — tabla cruda de aterrizaje + FKs (004): `dependencia_id`,
-  `diagnostico_codigo`, `prioridad_codigo`, `hospital_id`.
+- `intervenciones` (001) — tabla cruda de aterrizaje + FKs (004): `ubicacion_id`,
+  `diagnostico_codigo`, `prioridad_codigo`, `hospital_id`; e identidad de la
+  institución por fila: `codigo_comisaria`, `tipo_dependencia`.
 - dims (002): `dim_diagnostico`, `dim_prioridad`, `dim_hospital` (split de los
   campos ya codificados; se pueblan en el transform).
-- `dependencias` (003, PostGIS) — un lugar por `(direccion, altura)`; `geom`
-  `Point,4326`; etiqueta `dependencia_policial_N` cuando `nombre` es NULL.
+- `ubicaciones` (003, PostGIS) — un punto por `(direccion, altura)` = la **ubicación
+  de la intervención** (a geocodificar); `geom Point,4326`. **No** es la sede de la
+  dependencia: la columna direccion/altura varía por incidente (ver memoria
+  `location-source-of-truth`). La institución se identifica en `intervenciones`.
 - `intervencion_analisis` (004) — 1:1, enriquecimiento LLM en `atributos` JSONB
   (modelo híbrido: variables estables se promueven a columnas en la vista).
 - `v_intervenciones` (004) — vista plana que une todo.

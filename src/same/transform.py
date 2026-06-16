@@ -43,24 +43,13 @@ _STEPS: list[tuple[str, str]] = [
         """,
     ),
     (
-        "dependencias",
-        # Un lugar por (direccion, altura). codigo_comisaria = la moda de los
-        # códigos extraídos de `motivo`; tipo es una heurística provisional
-        # (se refinará con el enriquecimiento por LLM).
+        "ubicaciones",
+        # Un punto por (direccion, altura) distinto — la ubicación de la
+        # intervención (a geocodificar). No lleva atributos de institución.
         """
-        INSERT INTO dependencias (direccion, altura, tipo, codigo_comisaria)
-        SELECT direccion, altura::int,
-            CASE
-                WHEN bool_or(motivo ~* 'COMPLEJO|PENITENCIAR|UNIDAD [0-9]|C\\.?P\\.?F')
-                    THEN 'penitenciaria'
-                WHEN bool_or(motivo ~* 'COMISAR') THEN 'policial'
-                ELSE 'desconocido'
-            END,
-            mode() WITHIN GROUP (
-                ORDER BY substring(motivo from 'COMISAR[IÍ]A[ ]*([0-9]{1,2}[A-Z]?)')
-            ) FILTER (WHERE motivo ~ 'COMISAR[IÍ]A[ ]*[0-9]')
+        INSERT INTO ubicaciones (direccion, altura)
+        SELECT DISTINCT direccion, altura::int
         FROM intervenciones WHERE direccion IS NOT NULL
-        GROUP BY direccion, altura::int
         ON CONFLICT (direccion, altura) DO NOTHING
         """,
     ),
@@ -80,9 +69,25 @@ _STEPS: list[tuple[str, str]] = [
         " FROM dim_hospital h WHERE i.destino_traslado = h.nombre",
     ),
     (
-        "link dependencia_id",
-        "UPDATE intervenciones i SET dependencia_id = d.id"
-        " FROM dependencias d WHERE i.direccion = d.direccion AND i.altura::int = d.altura",
+        "link ubicacion_id",
+        "UPDATE intervenciones i SET ubicacion_id = u.id"
+        " FROM ubicaciones u WHERE i.direccion = u.direccion AND i.altura::int = u.altura",
+    ),
+    (
+        # Identidad de la institución por fila (no es dirección): código de
+        # comisaría desde `motivo`, y tipo por heurística (provisional).
+        "set codigo_comisaria",
+        "UPDATE intervenciones"
+        " SET codigo_comisaria = substring(motivo from 'COMISAR[IÍ]A[ ]*([0-9]{1,2}[A-Z]?)')"
+        " WHERE motivo ~ 'COMISAR[IÍ]A[ ]*[0-9]'",
+    ),
+    (
+        "set tipo_dependencia",
+        "UPDATE intervenciones SET tipo_dependencia = CASE"
+        " WHEN motivo ~* 'COMPLEJO|PENITENCIAR|UNIDAD [0-9]|C\\.?P\\.?F' THEN 'penitenciaria'"
+        " WHEN motivo ~* 'COMISAR' THEN 'policial'"
+        " WHEN motivo ~* 'ALCAID|ALCALD' THEN 'penitenciaria'"
+        " ELSE 'desconocido' END",
     ),
 ]
 
