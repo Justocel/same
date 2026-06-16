@@ -1,4 +1,4 @@
-.PHONY: install lint format test run migrate transform redact-names
+.PHONY: install lint format test run migrate transform redact-names geocode
 
 install:
 	uv sync
@@ -25,3 +25,6 @@ transform:
 
 redact-names:
 	uv run python -m same.redact_names
+
+geocode:
+	uv run python -m same.geocode

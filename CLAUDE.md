@@ -32,6 +32,10 @@ transform relacional. `make transform` re-corre solo el transform (idempotente).
   intervención, a geocodificar), linkea las FKs, y setea por fila la identidad de
   la institución en `intervenciones`: `codigo_comisaria` (regex sobre `motivo`) y
   `tipo_dependencia` (heurístico **provisional**).
+- `geocode.py` — geocoding de `ubicaciones` con el normalizador **USIG** (GCBA,
+  gratis, CABA). `make geocode` (idempotente: solo las que no tienen `geom`). Caché
+  en `data/cache/geocode.json`. Descarta puntos fuera del bbox de CABA (mal-geocodes
+  por ambigüedad). `altura = 0` no se geocodifica (sin punto confiable).
 - `db.py` — `connect()`: context manager sobre `psycopg` (commit/rollback).
 - `__main__.py` — orquesta extract → load (`TRUNCATE … CASCADE` + insert) →
   transform; además exporta `data/processed/intervenciones.csv`. Carga `.env` con
@@ -67,8 +71,11 @@ comisaría es el riesgo a evitar. Dos capas, ambas implementadas:
 (El PDF estuvo brevemente en commits públicos ya purgados de la rama; los objetos
 viejos pueden seguir cacheados en GitHub hasta su GC.)
 
+**Geocoding:** `make geocode` puebla `lat/lon/geom` de `ubicaciones` vía USIG
+(~585/746 puntos; ~87% de las intervenciones quedan con punto). Las que no entran:
+`altura = 0` (102) o direcciones que USIG no resuelve (48).
+
 **Pendiente (próximos pasos):**
-- Geocoding USIG (GCBA) para llenar `lat/lon/geom` de `dependencias`.
 - Enriquecimiento LLM (Haiku) → `intervencion_analisis.atributos` (variables como
   `violencia_genero`, `autolesion`, `sexo`, …).
 

@@ -35,7 +35,10 @@ en [`data/raw/`](data/raw/) y `make run` toma el primer `*.pdf` que encuentre ah
 
 ## Tasks
 
-`make lint` · `make format` · `make test` · `make migrate` · `make run` · `make transform` · `make redact-names`
+`make lint` · `make format` · `make test` · `make migrate` · `make run` · `make transform` · `make redact-names` · `make geocode`
+
+> `make geocode` geocodifica las `ubicaciones` (calle+altura) con el normalizador
+> USIG (GCBA, gratis, CABA) → `lat/lon/geom`. Idempotente y con caché local.
 
 > Pre-commit's ruff **is** the dev-group ruff (a `local` hook running
 > `uv run ruff`), so it never drifts from `make lint`/`make format`. Anything
