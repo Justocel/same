@@ -37,9 +37,11 @@ transform relacional. `make transform` re-corre solo el transform (idempotente).
   en `data/cache/geocode.json`. Descarta puntos fuera del bbox de CABA (mal-geocodes
   por ambigüedad). `altura = 0` no se geocodifica (sin punto confiable).
 - `enrich.py` — enriquecimiento cualitativo de `motivo` con Claude Haiku 4.5
-  (**Batches API** + salida estructurada + caché por hash). `make enrich` escribe 16
-  variables (`sexo` + 15 booleanas) a `intervencion_analisis.atributos`. `--sample N`
-  para validar el prompt sin tocar la DB. Set actual = `vars-v1` (ver `docs/plan-analisis.md`).
+  (**Batches API** + salida estructurada + caché por hash **versionada por
+  `PROMPT_VERSION`**). `make enrich` escribe 24 variables (4 categóricas + 20
+  booleanas) a `intervencion_analisis.atributos`. `--sample N` valida el prompt sin
+  tocar la DB. Set actual = `vars-v2` (ver `docs/plan-analisis.md`). Conexión corta:
+  no se mantiene abierta durante el batch (evitar lock idle-in-transaction).
 - `db.py` — `connect()`: context manager sobre `psycopg` (commit/rollback).
 - `__main__.py` — orquesta extract → load (`TRUNCATE … CASCADE` + insert) →
   transform; además exporta `data/processed/intervenciones.csv`. Carga `.env` con
@@ -79,13 +81,21 @@ viejos pueden seguir cacheados en GitHub hasta su GC.)
 (~585/746 puntos; ~87% de las intervenciones quedan con punto). Las que no entran:
 `altura = 0` (102) o direcciones que USIG no resuelve (48).
 
-**Enriquecimiento:** `make enrich` pobló `intervencion_analisis` con 16 variables
-(`vars-v1`) para las 4056 filas. Prevalencias top: agresión por terceros 15.9%,
-oficio judicial 14.8% (sobre-inclusiva), múltiples pacientes 11.1%, autolesión 5.6%,
-crisis psiquiátrica 4.8% (cruza con diagnóstico 18-PSIQUIÁTRICAS 5.2%).
+**Enriquecimiento (`vars-v2`):** `make enrich` pobló `intervencion_analisis` (4056
+filas). Hallazgos: **población mixta** — `tipo_sujeto` detenido 59% / civil 16% /
+personal 5% / desconocido 20% (confirma que no son solo detenidos). Casi siempre lo
+pide la institución (`quien_solicita` policía/alcaidía/JS 75%, paciente 1%). Top
+booleanas: agresión por terceros 14%, condición crónica 13%, múltiples pacientes 11%,
+convulsiones 5.6%, autolesión 5.2%, crisis psiquiátrica 4.6%; 4 fallecimientos.
+`es_oficio_judicial` pasó a regex determinístico (7.8%, antes LLM 14.8%). Derivadas
+en la vista: `edad`, `es_oficio_judicial`, `trasladado` (= traslado OR destino, 24.3%).
 
-**Próximos pasos:** ver `docs/plan-analisis.md` (roadmap: EDA, enrich v2 con
-`tipo_sujeto`/`ingesta_cuerpo_extrano`, denominadores, MCA/LCA, mapas).
+**Hallazgo (hipótesis instrumental):** la ingesta de cuerpo extraño se traslada al
+hospital 60% vs 24% basal (autolesión 37%) — fuerte señal de autolesión ligada al
+traslado (ver `docs/plan-analisis.md` §5).
+
+**Próximos pasos:** ver `docs/plan-analisis.md` (EDA, test formal de la hipótesis,
+denominadores, MCA/LCA, mapas).
 
 **Conventions:**
 - Secrets live in `.env` (never commit). `.env.example` documents the keys.

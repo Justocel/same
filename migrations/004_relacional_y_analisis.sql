@@ -45,7 +45,7 @@ SELECT
     i.fila,
     i.codigo_comisaria,
     -- Derivadas determinísticas (gratis):
-    substring(i.motivo from 'DE ([0-9]{1,3}) ?A[ÑN]OS')::int        AS edad,
+    substring(i.motivo from '([0-9]{1,3}) ?A[ÑN]OS')::int           AS edad,
     (i.codigo_prioridad LIKE '6 %' OR i.motivo ~* 'OFICIO JUDICIAL') AS es_oficio_judicial,
     (i.traslado OR i.destino_traslado IS NOT NULL)                   AS trasladado,
     u.lat,
