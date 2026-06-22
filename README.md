@@ -35,10 +35,12 @@ en [`data/raw/`](data/raw/) y `make run` toma el primer `*.pdf` que encuentre ah
 
 ## Tasks
 
-`make lint` · `make format` · `make test` · `make migrate` · `make run` · `make transform` · `make redact-names` · `make geocode`
+`make lint` · `make format` · `make test` · `make migrate` · `make run` · `make transform` · `make redact-names` · `make geocode` · `make enrich`
 
 > `make geocode` geocodifica las `ubicaciones` (calle+altura) con el normalizador
-> USIG (GCBA, gratis, CABA) → `lat/lon/geom`. Idempotente y con caché local.
+> USIG (GCBA, gratis, CABA) → `lat/lon/geom`. `make enrich` extrae 16 variables
+> cualitativas de `motivo` con Claude Haiku 4.5 → `intervencion_analisis`. Ambos
+> idempotentes, con caché local, necesitan `ANTHROPIC_API_KEY` (enrich).
 
 > Pre-commit's ruff **is** the dev-group ruff (a `local` hook running
 > `uv run ruff`), so it never drifts from `make lint`/`make format`. Anything

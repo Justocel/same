@@ -36,6 +36,10 @@ transform relacional. `make transform` re-corre solo el transform (idempotente).
   gratis, CABA). `make geocode` (idempotente: solo las que no tienen `geom`). Caché
   en `data/cache/geocode.json`. Descarta puntos fuera del bbox de CABA (mal-geocodes
   por ambigüedad). `altura = 0` no se geocodifica (sin punto confiable).
+- `enrich.py` — enriquecimiento cualitativo de `motivo` con Claude Haiku 4.5
+  (**Batches API** + salida estructurada + caché por hash). `make enrich` escribe 16
+  variables (`sexo` + 15 booleanas) a `intervencion_analisis.atributos`. `--sample N`
+  para validar el prompt sin tocar la DB. Set actual = `vars-v1` (ver `docs/plan-analisis.md`).
 - `db.py` — `connect()`: context manager sobre `psycopg` (commit/rollback).
 - `__main__.py` — orquesta extract → load (`TRUNCATE … CASCADE` + insert) →
   transform; además exporta `data/processed/intervenciones.csv`. Carga `.env` con
@@ -75,9 +79,13 @@ viejos pueden seguir cacheados en GitHub hasta su GC.)
 (~585/746 puntos; ~87% de las intervenciones quedan con punto). Las que no entran:
 `altura = 0` (102) o direcciones que USIG no resuelve (48).
 
-**Pendiente (próximos pasos):**
-- Enriquecimiento LLM (Haiku) → `intervencion_analisis.atributos` (variables como
-  `violencia_genero`, `autolesion`, `sexo`, …).
+**Enriquecimiento:** `make enrich` pobló `intervencion_analisis` con 16 variables
+(`vars-v1`) para las 4056 filas. Prevalencias top: agresión por terceros 15.9%,
+oficio judicial 14.8% (sobre-inclusiva), múltiples pacientes 11.1%, autolesión 5.6%,
+crisis psiquiátrica 4.8% (cruza con diagnóstico 18-PSIQUIÁTRICAS 5.2%).
+
+**Próximos pasos:** ver `docs/plan-analisis.md` (roadmap: EDA, enrich v2 con
+`tipo_sujeto`/`ingesta_cuerpo_extrano`, denominadores, MCA/LCA, mapas).
 
 **Conventions:**
 - Secrets live in `.env` (never commit). `.env.example` documents the keys.
