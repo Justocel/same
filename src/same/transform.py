@@ -75,19 +75,11 @@ _STEPS: list[tuple[str, str]] = [
     ),
     (
         # Identidad de la institución por fila (no es dirección): código de
-        # comisaría desde `motivo`, y tipo por heurística (provisional).
+        # comisaría desde `motivo`. (`tipo_dependencia` se mueve al LLM en `enrich.py`.)
         "set codigo_comisaria",
         "UPDATE intervenciones"
         " SET codigo_comisaria = substring(motivo from 'COMISAR[IÍ]A[ ]*([0-9]{1,2}[A-Z]?)')"
         " WHERE motivo ~ 'COMISAR[IÍ]A[ ]*[0-9]'",
-    ),
-    (
-        "set tipo_dependencia",
-        "UPDATE intervenciones SET tipo_dependencia = CASE"
-        " WHEN motivo ~* 'COMPLEJO|PENITENCIAR|UNIDAD [0-9]|C\\.?P\\.?F' THEN 'penitenciaria'"
-        " WHEN motivo ~* 'COMISAR' THEN 'policial'"
-        " WHEN motivo ~* 'ALCAID|ALCALD' THEN 'penitenciaria'"
-        " ELSE 'desconocido' END",
     ),
 ]
 

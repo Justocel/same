@@ -8,10 +8,9 @@ ALTER TABLE intervenciones
     ADD COLUMN IF NOT EXISTS diagnostico_codigo TEXT   REFERENCES dim_diagnostico (codigo),
     ADD COLUMN IF NOT EXISTS prioridad_codigo   TEXT   REFERENCES dim_prioridad (codigo),
     ADD COLUMN IF NOT EXISTS hospital_id        BIGINT REFERENCES dim_hospital (id),
-    -- Identidad de la dependencia (institución), extraída de `motivo` por fila.
-    -- No es una dirección: la sede canónica se resolvería con un roster externo.
-    ADD COLUMN IF NOT EXISTS codigo_comisaria   TEXT,   -- p. ej. "7A" (NULL si no se menciona)
-    ADD COLUMN IF NOT EXISTS tipo_dependencia   TEXT;   -- policial | penitenciaria | desconocido
+    -- Identidad de la dependencia: el código de comisaría se extrae de `motivo`
+    -- (regex, en el transform). El `tipo_dependencia` lo infiere el LLM (atributos).
+    ADD COLUMN IF NOT EXISTS codigo_comisaria   TEXT;   -- p. ej. "7A" (NULL si no se menciona)
 
 CREATE INDEX IF NOT EXISTS idx_intervenciones_ubicacion ON intervenciones (ubicacion_id);
 CREATE INDEX IF NOT EXISTS idx_intervenciones_codigo_comisaria ON intervenciones (codigo_comisaria);
@@ -29,8 +28,7 @@ CREATE TABLE IF NOT EXISTS intervencion_analisis (
 
 CREATE INDEX IF NOT EXISTS idx_analisis_atributos ON intervencion_analisis USING GIN (atributos);
 
--- 3) Vista plana: intervención + ubicación (a geocodificar) + identidad de la
---    dependencia + variables cualitativas promovidas desde el JSONB.
+-- 3) Vista plana: cruda + ubicación + derivadas (gratis) + variables del LLM.
 CREATE OR REPLACE VIEW v_intervenciones AS
 SELECT
     i.id,
@@ -46,14 +44,23 @@ SELECT
     i.pagina,
     i.fila,
     i.codigo_comisaria,
-    i.tipo_dependencia,
+    -- Derivadas determinísticas (gratis):
+    substring(i.motivo from 'DE ([0-9]{1,3}) ?A[ÑN]OS')::int        AS edad,
+    (i.codigo_prioridad LIKE '6 %' OR i.motivo ~* 'OFICIO JUDICIAL') AS es_oficio_judicial,
+    (i.traslado OR i.destino_traslado IS NOT NULL)                   AS trasladado,
     u.lat,
     u.lon,
-    (a.atributos ->> 'violencia_genero')::boolean AS violencia_genero,
-    (a.atributos ->> 'autolesion')::boolean       AS autolesion,
-    (a.atributos ->> 'intento_suicidio')::boolean AS intento_suicidio,
-    (a.atributos ->> 'arma_blanca')::boolean      AS arma_blanca,
-    a.atributos ->> 'sexo'                         AS sexo
+    -- Variables del LLM (atributos JSONB) promovidas a columnas:
+    a.atributos ->> 'sexo'             AS sexo,
+    a.atributos ->> 'tipo_sujeto'      AS tipo_sujeto,
+    a.atributos ->> 'tipo_dependencia' AS tipo_dependencia,
+    a.atributos ->> 'quien_solicita'   AS quien_solicita,
+    (a.atributos ->> 'violencia_genero')::boolean       AS violencia_genero,
+    (a.atributos ->> 'autolesion')::boolean             AS autolesion,
+    (a.atributos ->> 'agresion_por_terceros')::boolean  AS agresion_por_terceros,
+    (a.atributos ->> 'crisis_psiquiatrica')::boolean    AS crisis_psiquiatrica,
+    (a.atributos ->> 'ingesta_cuerpo_extrano')::boolean AS ingesta_cuerpo_extrano,
+    (a.atributos ->> 'fallecimiento')::boolean          AS fallecimiento
 FROM intervenciones i
 LEFT JOIN ubicaciones u ON u.id = i.ubicacion_id
 LEFT JOIN intervencion_analisis a ON a.intervencion_id = i.id;
