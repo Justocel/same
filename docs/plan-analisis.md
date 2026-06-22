@@ -101,15 +101,24 @@ diagnóstico NO trae. Variables a agregar (cambian el schema ⟹ otro batch ~US$
   (ej. cardiovascular vs autolesión/violencia).
 - Corregir por multiplicidad (FDR). Todo observacional.
 
-## 6. Calidad de datos a revisar (antes de concluir)
+## 6. Calidad de datos — hallazgos (verificado)
 
-- **`traslado` (campo incompleto)**: el comunicado entrega el dato "as-is"; sospecha de
-  que algunos `No` sean campo no completado, no ausencia de traslado. Validar con
-  cross-tabs: `traslado` × `destino_traslado` presente × `prioridad`/`diagnostico`. Un
-  `1-ROJO` con `traslado=No` y sin destino es sospechoso. Decidir si la variable es
-  confiable o si hay que tratar `No` como "desconocido" en ciertos casos.
-- **Completitud temporal**: ¿el período 01/2022–05/2026 está completo o tiene huecos
-  por mes? Graficar conteo mensual y buscar caídas anómalas.
+- **`traslado` NO es confiable como "no hubo traslado"** (confirmado):
+  - 138 filas con `traslado=No` pero **con** `destino_traslado` (mal cargadas → sí se
+    trasladaron); 65 con `traslado=Sí` **sin** destino (destino no completado).
+  - **72.4% de los `1-ROJO` figuran sin traslado** (1665/2301) — implausible para máxima
+    criticidad → fuerte subregistro del campo.
+  - Validez interna OK: la tasa por diagnóstico ordena bien (POLITRAUMATISMO 70%,
+    NEUROLÓGICAS 63%, PSIQUIÁTRICAS 63%, ARMA BLANCA 53% vs "OTROS" 12%) → el campo
+    captura señal pero **subcuenta**.
+  - **Tratamiento adoptado**: usar `trasladado = traslado OR (destino_traslado IS NOT
+    NULL)` como señal de "sí se trasladó"; `No` se trata como *ambiguo*, no como "no
+    trasladado" (sobre todo en casos graves). Conviene promover esta variable derivada
+    a la vista.
+- **Completitud temporal**: ✅ **53/53 meses presentes, sin huecos** (01/2022–05/2026;
+  2026-05 parcial por corte el 11/05). Pero hay **tendencia ~3x** (de ~40-55/mes en 2022
+  a ~125-160/mes en 2026) — probablemente **expansión del sistema de alcaidías CABA /
+  mejor registro**, no necesariamente más morbilidad (denominador, §0).
 - **`es_oficio_judicial`**: ~7% son trámites, no atención médica → filtrar para análisis
   clínico.
 
