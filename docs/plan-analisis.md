@@ -57,24 +57,53 @@ Respuesta a un **pedido de acceso a la información pública (Ley 104 CABA, t.c.
 - **Sujeto/paciente** (`tipo_sujeto`, a crear): de quién es la atención. **Filtro
   primario** para casi todo análisis.
 
-## 3. Enriquecimiento v2 (próximo batch LLM)
+## 3. Enriquecimiento — plan en 3 buckets (un solo pase pago)
 
-El `diagnostico` estructurado ya cubre lo clínico (traumatismo, respiratorio, digestivo,
-psiquiátrico, etc.), así que el LLM debe capturar lo **contextual/comportamental** que el
-diagnóstico NO trae. Variables a agregar (cambian el schema ⟹ otro batch ~US$2):
+El `diagnostico` estructurado ya cubre lo clínico; el LLM solo captura lo
+**contextual/comportamental**. Como cambiar el set LLM invalida la caché (= re-batch
+completo ~US$2), se empuja todo lo posible a lo gratis y se corre **un único pase
+`vars-v2`** con TODO. Tres buckets:
 
-- **`tipo_sujeto`** (categórica: `detenido` | `personal_policial` | `civil` | `desconocido`).
-  Máxima prioridad — segmenta todo.
-- **`ingesta_cuerpo_extrano`** (bool): tragó hoja de afeitar / objeto / cuchilla. ~30-40
-  casos detectados; habilita la hipótesis de autolesión instrumental (§5).
-- (Opcional) **`caida`** (bool) y **`condicion_cronica`** (bool: diabetes/HTA/epilepsia/
-  asma/HIV-TBC) — evaluar si aportan sobre `diagnostico` antes de gastar.
+### Bucket 1 — LLM `vars-v2` (paga, un solo batch)
+Se mantienen las v1 **excepto `es_oficio_judicial`** (pasa a regex). Categóricas:
+- `sexo` (M | F | desconocido)
+- **`tipo_sujeto`** (detenido | personal_policial | civil | desconocido) — segmenta todo
+- **`tipo_dependencia`** (comisaria | alcaidia | unidad_penitenciaria | otra | desconocido)
+  — se **mueve del heurístico de `transform.py` al LLM** (más preciso)
+- **`quien_solicita`** (alcaidia | personal_policial | jefe_servicio | paciente | tercero | desconocido)
 
-> Nota: las 16 variables v1 (`vars-v1`) ya corridas: `sexo`, `violencia_genero`,
-> `autolesion`, `intento_suicidio`, `agresion_por_terceros`, `arma_blanca`,
-> `arma_de_fuego`, `intoxicacion_sustancias`, `crisis_psiquiatrica`, `convulsiones`,
-> `perdida_de_conocimiento`, `huelga_de_hambre`, `embarazo`, `menor_de_edad`,
-> `multiples_pacientes`, `es_oficio_judicial`.
+Booleanas (v1 que siguen): `violencia_genero`, `autolesion`, `intento_suicidio`,
+`agresion_por_terceros`, `arma_blanca`, `arma_de_fuego`, `intoxicacion_sustancias`,
+`crisis_psiquiatrica`, `convulsiones`, `perdida_de_conocimiento`, `huelga_de_hambre`,
+`embarazo`, `menor_de_edad`, `multiples_pacientes`.
+Booleanas nuevas:
+- **`ingesta_cuerpo_extrano`** — hoja de afeitar/objeto tragado (hipótesis instrumental, §5)
+- **`fallecimiento`** — muerte en custodia (raro pero crítico)
+- **`motin_o_conflicto_colectivo`** — distinto de agresión individual
+- **`negativa_del_paciente`** — se niega a atención/traslado
+- **`condicion_cronica`** — comorbilidad de base (diabetes/HTA/HIV/epilepsia…)
+- **`episodio_previo_mencionado`** — proxy de reincidencia (no podemos linkear personas)
+
+### Bucket 2 — determinístico/regex (gratis, fuera del LLM)
+- **`edad`** (int): regex `DE \d+ AÑOS` cubre la mayoría.
+- **`es_oficio_judicial`**: regex literal `OFICIO JUDICIAL` → arregla la sobre-inclusión
+  del LLM (14.8%) y lo saca del set pago. (Va como columna en `transform` o en la vista.)
+
+### Bucket 3 — derivado/geográfico (gratis, SQL/PostGIS)
+- **`trasladado`** = `traslado OR destino_traslado IS NOT NULL` → promover a la vista.
+- **`comuna`/`barrio`** por ubicación: reverse-geocode USIG o spatial join con el polígono
+  de comunas (BA Data).
+- **Features de tiempo** (hora, franja, día de semana, mes, año) de `fecha_hora`.
+
+> **Implementación pendiente al construir v2**: decidir si `tipo_dependencia` (ahora LLM)
+> y `es_oficio_judicial` (ahora regex) viven como columnas en `intervenciones` o en
+> `atributos`+vista; `transform.py` deja de setear `tipo_dependencia`. Bumpear
+> `PROMPT_VERSION` a `vars-v2`.
+>
+> v1 ya corrida (16 vars): `sexo` + `violencia_genero`, `autolesion`, `intento_suicidio`,
+> `agresion_por_terceros`, `arma_blanca`, `arma_de_fuego`, `intoxicacion_sustancias`,
+> `crisis_psiquiatrica`, `convulsiones`, `perdida_de_conocimiento`, `huelga_de_hambre`,
+> `embarazo`, `menor_de_edad`, `multiples_pacientes`, `es_oficio_judicial`.
 
 ## 4. Líneas de análisis
 
