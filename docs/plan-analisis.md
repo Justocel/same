@@ -137,7 +137,23 @@ ubicaciones asignadas). **Comuna 1** (centro) concentra el volumen (628); **comu
 de alcaidías (~70%). Mapas en `data/processed/mapa_intervenciones.png` y `mapa_comunas.png`
 (no versionados). *Pendiente*: cruzar con NBI/socioeconómico por comuna (INDEC) y
 **formalizar** el enriquecimiento `comuna` (hoy in-place: `dim_comuna` + spatial join) como
-migración + paso del pipeline.
+migración + paso del pipeline. (La columna `ubicaciones.comuna` ya está en la migración 003;
+falta el paso que la puebla.)
+
+**Hallazgos — género (exploratorio, con caveats fuertes):**
+- `sexo` mejorado: vista híbrida (LLM + regex de marcadores explícitos de `motivo`,
+  acuerdo 99.4%) → "desconocido" baja de 51% a 36% (M 53%, F 11%). Aun así, género ⟂
+  `tipo_sujeto`: **mujeres = 63% civiles**, varones = 78% detenidos.
+- **Brecha de traslado oculta por el embarazo**: crudo no hay brecha (M 24% vs F 23%),
+  pero el embarazo infla el traslado femenino (65% vs 20%). Excluyendo embarazos y
+  **controlando gravedad (ROJO), embarazo y tipo_sujeto**: mujeres **OR=0.70 (0.52–0.93,
+  p=0.016)** → se trasladan ~30% menos a igualdad de condiciones. La brecha aparece en
+  detenidas y civiles, más marcada en **civiles (F 20.5% vs M 30.3%)**. Posible sesgo de
+  acceso, **observacional** (n mujeres modesto, puede haber confusión clínica residual) →
+  señal para mirar más fino, no prueba de discriminación.
+- **Violencia de género** (n=46, muy exploratorio): 80% mujeres, **93% civiles** → mujeres
+  que llegan a la comisaría como víctimas de VG (no violencia intramuros); 70% con agresión,
+  lesiones leves. Conecta con "la comisaría como punto de contacto".
 
 ## 5. Hipótesis (asociacionales, no causales)
 

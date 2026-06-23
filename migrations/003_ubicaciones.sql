@@ -3,7 +3,8 @@
 -- OJO: NO es la sede de la dependencia — la columna direccion/altura varía por
 -- incidente (un mismo código de comisaría aparece con muchas direcciones). La
 -- institución (comisaría/alcaidía) se identifica aparte, por fila, en
--- `intervenciones` (codigo_comisaria / tipo_dependencia). Requiere PostGIS.
+-- `intervenciones` (codigo_comisaria) y en el enriquecimiento LLM
+-- (tipo_dependencia). Requiere PostGIS.
 CREATE EXTENSION IF NOT EXISTS postgis;
 
 CREATE TABLE IF NOT EXISTS ubicaciones (
@@ -15,6 +16,7 @@ CREATE TABLE IF NOT EXISTS ubicaciones (
     geom           geometry(Point, 4326),   -- GeoJSON vía ST_AsGeoJSON(geom)
     geocode_fuente TEXT,                     -- p. ej. "usig"
     geocoded_at    TIMESTAMP,
+    comuna         SMALLINT,                 -- spatial join con dim_comuna (BA Data)
     UNIQUE (direccion, altura)
 );
 

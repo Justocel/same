@@ -50,8 +50,18 @@ SELECT
     (i.traslado OR i.destino_traslado IS NOT NULL)                   AS trasladado,
     u.lat,
     u.lon,
-    -- Variables del LLM (atributos JSONB) promovidas a columnas:
-    a.atributos ->> 'sexo'             AS sexo,
+    u.comuna,
+    -- sexo HÍBRIDO: el LLM si decide M/F, si no marcadores explícitos de `motivo`
+    -- (regex) — recupera ~15 pts del 51% "desconocido" del LLM (acuerdo 99.4%).
+    CASE
+      WHEN a.atributos ->> 'sexo' IN ('M', 'F') THEN a.atributos ->> 'sexo'
+      WHEN i.motivo ~* 'FEMENIN|\mFEM\M|MUJER|\mINTERNA\M|\mDETENIDA\M|SE[ÑN]ORA|EMBARAZ|GESTAN|\mLA MISMA\M'
+       AND i.motivo !~* 'MASCULIN|\mMASC\M|HOMBRE|VAR[OÓ]N|\mINTERNO\M|\mDETENIDO\M|PREVENIDO|\mEL MISMO\M' THEN 'F'
+      WHEN i.motivo ~* 'MASCULIN|\mMASC\M|HOMBRE|VAR[OÓ]N|\mINTERNO\M|\mDETENIDO\M|PREVENIDO|\mEL MISMO\M'
+       AND i.motivo !~* 'FEMENIN|\mFEM\M|MUJER|\mINTERNA\M|\mDETENIDA\M|SE[ÑN]ORA|EMBARAZ|GESTAN|\mLA MISMA\M' THEN 'M'
+      ELSE 'desconocido'
+    END AS sexo,
+    -- Resto de variables del LLM (atributos JSONB) promovidas a columnas:
     a.atributos ->> 'tipo_sujeto'      AS tipo_sujeto,
     a.atributos ->> 'tipo_dependencia' AS tipo_dependencia,
     a.atributos ->> 'quien_solicita'   AS quien_solicita,
