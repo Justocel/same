@@ -138,7 +138,15 @@ de alcaidías (~70%). Mapas en `data/processed/mapa_intervenciones.png` y `mapa_
 (no versionados). *Pendiente*: cruzar con NBI/socioeconómico por comuna (INDEC) y
 **formalizar** el enriquecimiento `comuna` (hoy in-place: `dim_comuna` + spatial join) como
 migración + paso del pipeline. (La columna `ubicaciones.comuna` ya está en la migración 003;
-falta el paso que la puebla.)
+ya formalizado: `dim_comuna` en migración 005, poblado por `make geocode`.)
+
+**Cruce socioeconómico — NBI por comuna** (BA Data, "Hogares con NBI por comuna"):
+**NBI vs volumen de intervenciones r=+0.57 (p=0.026)** → la actividad de detención/
+intervención se concentra en **comunas más pobres** (se atenúa sin la comuna 1, outlier:
+r=+0.47, p=0.09). En cambio **NBI vs % violencia r=-0.10 (ns)**: la violencia no tiene
+gradiente socioeconómico barrial (depende del setting de detención, no del barrio). Caveat
+del denominador: sin población detenida por comuna no se separa "más eventos" de "más
+gente detenida de zonas pobres".
 
 **Hallazgos — género (exploratorio, con caveats fuertes):**
 - `sexo` mejorado: vista híbrida (LLM + regex de marcadores explícitos de `motivo`,
