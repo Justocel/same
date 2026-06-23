@@ -144,13 +144,19 @@ falta el paso que la puebla.)
 - `sexo` mejorado: vista híbrida (LLM + regex de marcadores explícitos de `motivo`,
   acuerdo 99.4%) → "desconocido" baja de 51% a 36% (M 53%, F 11%). Aun así, género ⟂
   `tipo_sujeto`: **mujeres = 63% civiles**, varones = 78% detenidos.
-- **Brecha de traslado oculta por el embarazo**: crudo no hay brecha (M 24% vs F 23%),
-  pero el embarazo infla el traslado femenino (65% vs 20%). Excluyendo embarazos y
-  **controlando gravedad (ROJO), embarazo y tipo_sujeto**: mujeres **OR=0.70 (0.52–0.93,
-  p=0.016)** → se trasladan ~30% menos a igualdad de condiciones. La brecha aparece en
-  detenidas y civiles, más marcada en **civiles (F 20.5% vs M 30.3%)**. Posible sesgo de
-  acceso, **observacional** (n mujeres modesto, puede haber confusión clínica residual) →
-  señal para mirar más fino, no prueba de discriminación.
+- **Brecha de traslado oculta por el embarazo** (el hallazgo más fuerte): crudo no hay
+  brecha (M 24% vs F 23%), pero el embarazo infla el traslado femenino (65% vs 20%).
+  Profundización (controlando embarazo, tipo_sujeto, gravedad ROJO **y diagnóstico
+  agrupado**): mujeres **OR=0.62 (0.44–0.86, p=0.004)** — sobrevive todos los controles,
+  no la explican diagnósticos distintos.
+  - **Upstream**: a las mujeres las codifican **ROJO más** (66.9% vs 60.2%, p=0.009), no
+    menos → las evalúan más críticas pero las trasladan menos (no es artefacto de triage).
+  - **Dentro de ROJO** (igual gravedad, sin embarazo): **F 23.6% vs M 31.6% (p=0.009)**.
+  - **Concentración**: en lo clínico, sobre todo **cardiovascular (F 27% vs M 61%**, n=11,
+    exploratorio — eco del subtratamiento cardíaco femenino documentado); trauma y
+    psiquiátrico sin brecha.
+  - Posible **inequidad de acceso por género**; **observacional** (algunos subgrupos chicos,
+    confusión clínica residual posible) → señal robusta para mirar fino, no prueba causal.
 - **Violencia de género** (n=46, muy exploratorio): 80% mujeres, **93% civiles** → mujeres
   que llegan a la comisaría como víctimas de VG (no violencia intramuros); 70% con agresión,
   lesiones leves. Conecta con "la comisaría como punto de contacto".
