@@ -115,6 +115,30 @@ Booleanas nuevas:
 - **Cualitativo**: prevalencia de autolesión, crisis psiquiátrica, violencia entre
   internos, intoxicación → marcadores de condiciones de encierro.
 
+**Hallazgos — violencia (verificado, publicable):** violencia (agresión/motín/arma)
+en **16%** de las intervenciones. **Personal policial y civiles son víctimas de
+agresión al 25%** (vs detenidos 13%); los detenidos aparecen más en **motines**
+(5.5%). Por setting: alcaidía → motines (5.8%, conflicto colectivo); comisaría →
+agresión individual (15.2%). **1 de cada 7 agresiones es con arma blanca** (15.3%).
+El *share* de violencia es estable (~15%) pese a que el volumen se triplicó (creció
+proporcional, no peor; pico 2023 ~21%). Top dependencia: comisaría 1.
+
+**Hallazgos — quién es atendido (verificado, publicable):** tres poblaciones distintas.
+**Detenidos** (59%): autolesión 8.3% + condición crónica 16% + agresión 13%. **Civiles**
+(16.5%): víctimas de agresión 25% y **crisis psiquiátrica 11%** (diagnóstico PSIQUIÁTRICAS
+12%) — la comisaría como **punto de acceso de salud mental de último recurso**. **Personal
+policial** (5%): víctimas de agresión 25%, lesiones leves (TRAUMATISMO LEVE 43%). Incluso
+a los civiles los reporta el personal (57%); autopresentación del paciente solo ~5%.
+
+**Hallazgos — geografía por comuna (verificado, publicable):** *spatial join* con el
+polígono de comunas de BA Data (`dim_comuna`, columna `ubicaciones.comuna`; 584/585
+ubicaciones asignadas). **Comuna 1** (centro) concentra el volumen (628); **comunas 10 y
+2** tienen el mayor % de agresión (~25%); comunas del sur (4, 8, 9, 10) con alta presencia
+de alcaidías (~70%). Mapas en `data/processed/mapa_intervenciones.png` y `mapa_comunas.png`
+(no versionados). *Pendiente*: cruzar con NBI/socioeconómico por comuna (INDEC) y
+**formalizar** el enriquecimiento `comuna` (hoy in-place: `dim_comuna` + spatial join) como
+migración + paso del pipeline.
+
 ## 5. Hipótesis (asociacionales, no causales)
 
 - **Autolesión instrumental ("hoja de afeitar")**: las autolesiones / ingestas de cuerpo
