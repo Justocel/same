@@ -132,13 +132,28 @@ Booleanas nuevas:
     la **intención es inobservable**; la ingesta (que se traslada más que el trauma real)
     es el caso más sugestivo. Para separar intención de gravedad faltan outcomes y
     linkage de persona (removido por privacidad).
-- **Salud mental nocturna**: autolesión / crisis psiquiátrica más frecuentes de noche → χ²
-  por franja horaria.
-- **Condiciones de encierro**: `penitenciaria` (alojamiento prolongado) tiene más
-  autolesión/violencia que `policial` (tránsito) → χ².
-- **Sujeto vs cuadro**: el perfil clínico del personal policial difiere del de detenidos
-  (ej. cardiovascular vs autolesión/violencia).
+- **Salud mental nocturna** (verificado, χ²): autolesión **noche 7.1% vs día 4.1%**
+  (p=6e-5) e intento de suicidio 1.2% vs 0.5% (p=0.015) → pican de noche; crisis
+  psiquiátrica y agresión no.
+- **Condiciones de encierro** (verificado, χ²): autolesión **alcaidía 7.9% vs comisaría
+  1.9%** (p=6e-17, ~4×) — la detención prolongada concentra autolesión; en cambio la
+  crisis psiquiátrica es mayor en comisaría (6.5% vs 3%, tránsito/ingreso).
+- **Sujeto vs cuadro** (verificado, χ²): detenido = autolesión (8.3% vs 1.5% del personal);
+  **personal policial = víctima de agresión (25.5% vs 12.9%)**. (La hipótesis de
+  "personal cardiovascular" no se sostuvo: ≈ igual.)
 - Corregir por multiplicidad (FDR). Todo observacional.
+
+**Regresión logística sobre `trasladado`** (controla el confounder de gravedad):
+`trasladado ~ rojo + autolesion + ingesta + arma_blanca + crisis + agresion + C(tipo_sujeto)`.
+**Aún controlando ROJO** (OR 2.6), la **ingesta sigue OR=3.75** (IC 1.95–7.22, p=8e-5) y
+la **autolesión OR=1.74** (1.28–2.38) — el traslado alto NO se explica solo por la
+gravedad clínica codificada. Orden ingesta(3.75) > autolesión(1.74) > arma blanca(1.50);
+crisis y agresión no significativas. (pseudo-R² 0.05: el modelo explica poco en total,
+pero las asociaciones puntuales son robustas.)
+
+**Mapa** (`data/processed/mapa_intervenciones.png`, no versionado): 570 ubicaciones
+geocodificadas; alcaidías = hotspots de mayor volumen, comisarías más distribuidas. Sin
+overlay de autolesión (guardrail §8).
 
 ## 6. Calidad de datos — hallazgos (verificado)
 
@@ -174,9 +189,16 @@ Features mayormente **binarias/categóricas** ⟹ NO K-means/PCA. Lo adecuado:
 ## 8. Visualizaciones
 
 Serie temporal mensual (stack por prioridad) · heatmap hora×día · **mapa** de puntos +
-densidad por comuna · overlays por variable (dónde se concentran crisis/autolesión) ·
-barras de diagnóstico y top dependencias · **Sankey** diagnóstico→traslado→hospital ·
-small multiples de prevalencia por `tipo_sujeto`/`tipo_dependencia`.
+densidad por comuna · barras de diagnóstico y top dependencias · **Sankey**
+diagnóstico→traslado→hospital · small multiples de prevalencia por `tipo_sujeto`/
+`tipo_dependencia`.
+
+> ⚠️ **Guardrail editorial (decisión):** la **autolesión / intento de suicidio / ingesta
+> de cuerpo extraño** queda como **análisis interno, NO para el storytelling visual
+> público**. Razones: (1) contenido gráfico; (2) riesgo de **contagio/incentivo** de la
+> autolesión (efecto Werther) — publicar tasas o "métodos" puede inducir la conducta,
+> especialmente en población encerrada. Los mapas/overlays públicos usan variables menos
+> sensibles (volumen, diagnóstico, traslado); nada de overlays de autolesión.
 
 ## 9. Fuentes externas (APIs / CSVs públicos)
 
