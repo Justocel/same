@@ -118,10 +118,20 @@ Booleanas nuevas:
 ## 5. Hipótesis (asociacionales, no causales)
 
 - **Autolesión instrumental ("hoja de afeitar")**: las autolesiones / ingestas de cuerpo
-  extraño tienen una **tasa de traslado anormalmente alta** porque serían un medio para
-  ser trasladado al hospital y salir de la comisaría. → Cruzar `ingesta_cuerpo_extrano` /
-  `autolesion` × `traslado`; comparar con la tasa de traslado basal. (N chico ~30-40 para
-  ingesta → también análisis cualitativo/case-study, no solo test.)
+  extraño tendrían una tasa de traslado anormalmente alta por ser un medio para ser
+  trasladado al hospital y salir de la comisaría.
+  **Resultado (Fisher exacto, `trasladado` basal 24.3%):**
+  - `ingesta_cuerpo_extrano`: n=40, traslado **60%**, OR **4.8** (IC95 2.5–9.0), p=1.5e-6.
+  - `autolesion`: n=211, traslado 37%, OR 1.9 (1.5–2.6), p=1.5e-5.
+  - control `arma_blanca` (trauma real): 37%, OR 1.8 — *autolesión ≈ arma blanca*.
+  - `crisis_psiquiatrica` y `agresion_por_terceros`: ≈ basal (ns).
+  - **Robustez**: restringido a `tipo_sujeto='detenido'` el efecto crece (ingesta OR=5.5,
+    autolesión OR=2.2) → patrón específico de la población encerrada.
+  - **Confounder**: el **90% de las ingestas se codifican `1-ROJO`** (emergencia real),
+    así que el traslado alto está mediado por la gravedad. La asociación es fuerte, pero
+    la **intención es inobservable**; la ingesta (que se traslada más que el trauma real)
+    es el caso más sugestivo. Para separar intención de gravedad faltan outcomes y
+    linkage de persona (removido por privacidad).
 - **Salud mental nocturna**: autolesión / crisis psiquiátrica más frecuentes de noche → χ²
   por franja horaria.
 - **Condiciones de encierro**: `penitenciaria` (alojamiento prolongado) tiene más
