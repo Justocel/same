@@ -35,7 +35,8 @@ transform relacional. `make transform` re-corre solo el transform (idempotente).
 - `geocode.py` — geocoding de `ubicaciones` con el normalizador **USIG** (GCBA,
   gratis, CABA). `make geocode` (idempotente: solo las que no tienen `geom`). Caché
   en `data/cache/geocode.json`. Descarta puntos fuera del bbox de CABA (mal-geocodes
-  por ambigüedad). `altura = 0` no se geocodifica (sin punto confiable).
+  por ambigüedad). `altura = 0` no se geocodifica (sin punto confiable). Además asigna
+  `ubicaciones.comuna` por spatial join con `dim_comuna` (polígonos de BA Data).
 - `enrich.py` — enriquecimiento cualitativo de `motivo` con Claude Haiku 4.5
   (**Batches API** + salida estructurada + caché por hash **versionada por
   `PROMPT_VERSION`**). `make enrich` escribe 24 variables (4 categóricas + 20
@@ -49,17 +50,21 @@ transform relacional. `make transform` re-corre solo el transform (idempotente).
 
 **Esquema (relacional, ver `migrations/`):**
 - `intervenciones` (001) — tabla cruda de aterrizaje + FKs (004): `ubicacion_id`,
-  `diagnostico_codigo`, `prioridad_codigo`, `hospital_id`; e identidad de la
-  institución por fila: `codigo_comisaria`, `tipo_dependencia`.
+  `diagnostico_codigo`, `prioridad_codigo`, `hospital_id`; + `codigo_comisaria` (regex
+  sobre `motivo`, en el transform). (`tipo_dependencia` ya NO es columna: lo infiere
+  el LLM, vive en `atributos`.)
 - dims (002): `dim_diagnostico`, `dim_prioridad`, `dim_hospital` (split de los
   campos ya codificados; se pueblan en el transform).
 - `ubicaciones` (003, PostGIS) — un punto por `(direccion, altura)` = la **ubicación
-  de la intervención** (a geocodificar); `geom Point,4326`. **No** es la sede de la
-  dependencia: la columna direccion/altura varía por incidente (ver memoria
+  de la intervención** (a geocodificar); `geom Point,4326` + `comuna`. **No** es la sede
+  de la dependencia: direccion/altura varía por incidente (ver memoria
   `location-source-of-truth`). La institución se identifica en `intervenciones`.
+- `dim_comuna` (005, PostGIS) — polígonos de las 15 comunas (BA Data); el `make geocode`
+  los carga y asigna `ubicaciones.comuna` por spatial join.
 - `intervencion_analisis` (004) — 1:1, enriquecimiento LLM en `atributos` JSONB
   (modelo híbrido: variables estables se promueven a columnas en la vista).
-- `v_intervenciones` (004) — vista plana que une todo.
+- `v_intervenciones` (004) — vista plana: cruda + ubicación/comuna + derivadas gratis
+  (`edad`, `es_oficio_judicial`, `trasladado`, `sexo` híbrido LLM+regex) + variables LLM.
 
 **Privacidad / PII:** la columna `motivo` (descripción) contiene datos personales
 ocasionales — nombres y apellidos, teléfonos, números POC, `Id.Remoto`. El **PDF

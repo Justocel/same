@@ -9,6 +9,9 @@ todavía no tienen `geom`.
 Las direcciones con `altura = 0` no se geocodifican (USIG no da un punto confiable
 para una calle sin altura).
 
+Además asigna `ubicaciones.comuna` por spatial join con `dim_comuna` (polígonos de
+comunas de BA Data, descargados y cacheados). Todo idempotente.
+
     make geocode
 """
 
@@ -22,8 +25,13 @@ import urllib.request
 from pathlib import Path
 
 USIG_URL = "https://servicios.usig.buenosaires.gob.ar/normalizar"
+COMUNAS_URL = (
+    "https://cdn.buenosaires.gob.ar/datosabiertos/datasets/"
+    "ministerio-de-educacion/comunas/comunas.geojson"
+)
 ROOT = Path(__file__).resolve().parents[2]
 CACHE_PATH = ROOT / "data" / "cache" / "geocode.json"
+COMUNAS_CACHE = ROOT / "data" / "cache" / "comunas_caba.geojson"
 _PAUSE = 0.3  # segundos entre consultas en vivo (cortesía con el servicio público)
 # Bounding box de CABA. USIG a veces resuelve calles ambiguas a un punto en GBA;
 # como todas las dependencias son de CABA, descartamos lo que cae afuera.
@@ -88,6 +96,42 @@ _UPDATE = (
 )
 
 
+def _load_comunas(conn, log: logging.Logger) -> None:
+    """Carga los polígonos de comunas (BA Data) en dim_comuna si está vacía."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM dim_comuna")
+        if cur.fetchone()[0]:
+            return
+        if not COMUNAS_CACHE.exists():
+            req = urllib.request.Request(COMUNAS_URL, headers={"User-Agent": "same-sandbox/0.1"})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                COMUNAS_CACHE.write_bytes(r.read())
+        gj = json.loads(COMUNAS_CACHE.read_text(encoding="utf-8"))
+        for f in gj["features"]:
+            p = f["properties"]
+            cur.execute(
+                "INSERT INTO dim_comuna (comuna, barrios, geom) VALUES"
+                " (%s, %s, ST_Multi(ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326)))"
+                " ON CONFLICT (comuna) DO NOTHING",
+                (int(float(p["comuna"])), p.get("barrios"), json.dumps(f["geometry"])),
+            )
+    conn.commit()
+    log.info("dim_comuna: %d comunas cargadas", len(gj["features"]))
+
+
+def _assign_comunas(conn, log: logging.Logger) -> None:
+    """Asigna `ubicaciones.comuna` por spatial join con dim_comuna. Idempotente."""
+    _load_comunas(conn, log)
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE ubicaciones u SET comuna = c.comuna FROM dim_comuna c"
+            " WHERE u.comuna IS NULL AND u.geom IS NOT NULL AND ST_Contains(c.geom, u.geom)"
+        )
+        n = cur.rowcount
+    conn.commit()
+    log.info("comuna asignada a %d ubicaciones", n)
+
+
 def run(conn, log: logging.Logger) -> None:
     cache = load_cache()
     with conn.cursor() as cur:
@@ -110,6 +154,7 @@ def run(conn, log: logging.Logger) -> None:
     conn.commit()
     save_cache(cache)
     log.info("listo: %d/%d ubicaciones geocodificadas", hits, len(pend))
+    _assign_comunas(conn, log)
 
 
 def main() -> None:
