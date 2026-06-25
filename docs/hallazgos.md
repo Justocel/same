@@ -29,6 +29,8 @@ Los **civiles** que llegan a la comisaría son sobre todo **víctimas de agresi�
 funciona como **punto de acceso de salud mental de último recurso**. El **personal policial**
 aparece como víctima de lesiones (agresión 25%).
 
+![Quién es atendido y sus necesidades](figuras/02_quien.png)
+
 ### 2. 🎯 Una brecha de género en el traslado al hospital
 A primera vista no hay brecha (traslado M 24% vs F 23%). Pero el **embarazo** infla el
 traslado de las mujeres (65% vs 20%). Al controlar embarazo, gravedad y diagnóstico:
@@ -42,6 +44,8 @@ traslado de las mujeres (65% vs 20%). Al controlar embarazo, gravedad y diagnós
 Es una posible **inequidad de acceso por género**. Honesto: observacional, con subgrupos
 chicos; es una señal fuerte que merece mirarse más fino, no una prueba causal.
 
+![Brecha de género en el traslado](figuras/03_genero.png)
+
 ### 3. Violencia en 1 de cada 6 intervenciones
 - **Personal y civiles son víctimas de agresión al 25%** (el doble que los detenidos, 13%).
 - Por setting: **alcaidías → motines** (conflicto colectivo, detención prolongada);
@@ -49,17 +53,23 @@ chicos; es una señal fuerte que merece mirarse más fino, no una prueba causal.
 - **1 de cada 7 agresiones es con arma blanca** — armas dentro de la custodia.
 - El *share* de violencia se mantuvo estable (~15%) aunque el volumen total se triplicó.
 
+![Violencia: víctimas y setting](figuras/04_violencia.png)
+
 ### 4. Geografía: la detención se concentra en las comunas pobres
 - **Comuna 1** (centro) concentra el volumen; el volumen de intervenciones **correlaciona
   con la pobreza de la comuna** (NBI, r=+0,57, p=0,026).
 - La **violencia, en cambio, no tiene gradiente socioeconómico barrial** (r=-0,10, ns):
   depende del setting de detención, no del barrio.
-- Mapas: `data/processed/mapa_intervenciones.png` y `mapa_comunas.png`.
+- Mapas de puntos y choropleth por comuna en `data/processed/`.
+
+![Intervenciones vs pobreza por comuna (NBI)](figuras/05_nbi.png)
 
 ### 5. Un sistema que se triplicó
 Las intervenciones pasaron de ~45/mes (2022) a ~140/mes (2026) — probablemente la
 **expansión del sistema de alcaidías de CABA / mejor registro**, no necesariamente más
 morbilidad (otra vez, el denominador).
+
+![Intervenciones por mes 2022–2026](figuras/01_temporal.png)
 
 ## Lo que queda FUERA del relato visual (decisión editorial)
 
