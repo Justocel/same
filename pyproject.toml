@@ -13,6 +13,18 @@ dependencies = [
 
 [dependency-groups]
 dev = ["pytest>=8.0", "ruff>=0.6", "pre-commit>=3.8"]
+# Herramientas de análisis/notebooks (no las necesita el pipeline). Instalar con
+# `uv sync --group analysis`; correr el notebook con `make notebook`.
+analysis = [
+    "matplotlib>=3.8",
+    "geopandas>=1.0",
+    "scipy>=1.11",
+    "statsmodels>=0.14",
+    "jupyterlab>=4.0",
+    "jupytext>=1.16",
+    "ipykernel>=6.0",
+    "nbconvert>=7.0",
+]
 
 [build-system]
 requires = ["hatchling"]

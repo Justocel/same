@@ -15,4 +15,5 @@ data/raw/*
 data/processed/*
 !data/processed/.gitkeep
 *.session.sql
+.ipynb_checkpoints/
 .DS_Store

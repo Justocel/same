@@ -1,4 +1,4 @@
-.PHONY: install lint format test run migrate transform redact-names geocode enrich
+.PHONY: install lint format test run migrate transform redact-names geocode enrich notebook
 
 install:
 	uv sync
@@ -31,3 +31,9 @@ geocode:
 
 enrich:
 	uv run python -m same.enrich
+
+# Reconstruye y ejecuta el notebook de storytelling desde su fuente .py (reproducible).
+notebook:
+	uv run --group analysis jupytext --to notebook notebooks/hallazgos.py
+	uv run --group analysis jupyter nbconvert --to notebook --execute --inplace \
+		--ExecutePreprocessor.timeout=180 notebooks/hallazgos.ipynb

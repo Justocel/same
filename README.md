@@ -35,12 +35,21 @@ en [`data/raw/`](data/raw/) y `make run` toma el primer `*.pdf` que encuentre ah
 
 ## Tasks
 
-`make lint` · `make format` · `make test` · `make migrate` · `make run` · `make transform` · `make redact-names` · `make geocode` · `make enrich`
+`make lint` · `make format` · `make test` · `make migrate` · `make run` · `make transform` · `make redact-names` · `make geocode` · `make enrich` · `make notebook`
 
 > `make geocode` geocodifica las `ubicaciones` (calle+altura) con el normalizador
-> USIG (GCBA, gratis, CABA) → `lat/lon/geom`. `make enrich` extrae 16 variables
-> cualitativas de `motivo` con Claude Haiku 4.5 → `intervencion_analisis`. Ambos
-> idempotentes, con caché local, necesitan `ANTHROPIC_API_KEY` (enrich).
+> USIG (GCBA, gratis, CABA) → `lat/lon/geom` + comuna. `make enrich` extrae 24
+> variables cualitativas de `motivo` con Claude Haiku 4.5 → `intervencion_analisis`.
+> Ambos idempotentes, con caché local, necesitan `ANTHROPIC_API_KEY` (enrich).
+
+## Análisis
+
+Los hallazgos están en [`docs/hallazgos.md`](docs/hallazgos.md) (relato + figuras) y
+[`docs/plan-analisis.md`](docs/plan-analisis.md) (método + tests). El notebook de
+storytelling [`notebooks/hallazgos.ipynb`](notebooks/hallazgos.ipynb) regenera las
+figuras desde la base; su fuente versionable es `notebooks/hallazgos.py`. Las
+herramientas de análisis van en un grupo aparte: `uv sync --group analysis`, y
+`make notebook` reconstruye y ejecuta el notebook.
 
 > Pre-commit's ruff **is** the dev-group ruff (a `local` hook running
 > `uv run ruff`), so it never drifts from `make lint`/`make format`. Anything
